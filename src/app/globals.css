@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+/*
+ * Nexora look: "Precision Intelligence Workspace" (Google Stitch project 12724281244891207015).
+ * Natively dark slate, hairline borders and tonal layers instead of shadows, cyan as the one action colour,
+ * indigo for agent/AI things, emerald for "done/ok", amber for warnings, rose for late/errors.
+ * Geist for prose, JetBrains Mono for data (counts, dates, ids, keycaps).
+ */
+:root {
+  color-scheme: dark;
+  /* surfaces: canvas 0, container 1, hover/selected 2, overlay 3 */
+  --bg: #0b0d11;
+  --surface: #14171f;
+  --raised: #1a1f2b;
+  --overlay: #202636;
+  --line: #232936;
+  --line-strong: #2e3648;
+  --fg: #f1f5f9;
+  --muted: #94a3b8;
+  /* >= 4.5:1 on bg, surface and raised; only for small labels */
+  --faint: #7a889d;
+  --accent: #38bdf8;
+  --accent-ink: #04202e;
+  --agent: #818cf8;
+  --ok: #10b981;
+  --ok-ink: #04251b;
+  --warn: #f59e0b;
+  --danger: #fb7185;
+  --info: #818cf8;
+  /* one easing for entrances and presses */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-overlay: var(--overlay);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-agent: var(--agent);
+  --color-ok: var(--ok);
+  --color-ok-ink: var(--ok-ink);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --font-sans: var(--font-ui), system-ui, sans-serif;
+  --font-mono: var(--font-data), ui-monospace, monospace;
+  /* Stitch radius scale: 4px baseline, 8px for floating layers */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* Keycap pill (⌘K, Esc, C): monospace micro-capsule with an extruded bottom hairline. */
+.kbd {
+  display: inline-flex;
+  height: 18px;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--raised);
+  padding: 0 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  color: var(--muted);
+  box-shadow: 0 1px 0 0 var(--bg);
+}
+
+/* Floating layers (palette, dialogs): overlay surface, hairline, deep ambient shadow. */
+dialog {
+  opacity: 0;
+  transform: translateY(8px) scale(0.99);
+  transition:
+    opacity 0.18s var(--ease),
+    transform 0.18s var(--ease),
+    overlay 0.18s allow-discrete,
+    display 0.18s allow-discrete;
+}
+dialog[open] {
+  opacity: 1;
+  transform: none;
+}
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}
+dialog::backdrop {
+  background: rgb(5 7 10 / 0);
+  transition:
+    background-color 0.18s var(--ease),
+    overlay 0.18s allow-discrete,
+    display 0.18s allow-discrete;
+}
+dialog[open]::backdrop {
+  background: rgb(5 7 10 / 0.7);
+  backdrop-filter: blur(4px);
+}
+@starting-style {
+  dialog[open]::backdrop {
+    background: rgb(5 7 10 / 0);
+  }
+}
+@media (max-width: 767px) {
+  dialog {
+    transform: translateY(28px);
+  }
+  @starting-style {
+    dialog[open] {
+      transform: translateY(28px);
+    }
+  }
+}
+
+/* Entrances: content rises into place, one item after another (set --i on each item). */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.rise {
+  animation: rise 0.4s var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+.toast-in {
+  animation: toast-in 0.22s var(--ease);
+}
+
+/* A ring fills from empty to its value when it appears. */
+@keyframes ring-fill {
+  from {
+    stroke-dasharray: 0 1000;
+  }
+}
+.ring-fill {
+  animation: ring-fill 0.9s var(--ease) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
