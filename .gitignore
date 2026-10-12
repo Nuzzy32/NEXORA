@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Konfigurasi MCP/Codex lokal: memuat API key, jangan di-commit
 .codex/
+
+# Hasil gabungan migration untuk ditempel ke SQL Editor (dibuat ulang dari supabase/migrations)
+supabase/combined.sql

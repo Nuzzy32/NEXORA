@@ -21,6 +21,8 @@ Phase 1 (foundation) berjalan: login, dashboard, CRUD task, proyek (daftar, deta
    ```
 4. `cp .env.example .env.local`, isi `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Project Settings → API). Jangan pakai secret/service_role key.
 5. (Opsional) Tugas e-learning UNAIR: di Moodle buka Kalender → Impor atau ekspor kalender → Ekspor kalender → "Dapatkan URL kalender", lalu isi `ELEARNING_ICAL_URL` di `.env.local`. URL itu berisi token rahasia; jangan di-commit atau dibagikan. Sinkron lewat tombol di /tasks (D-017).
+5b. (Opsional, setelah deploy ke Vercel) Sinkron e-learning harian otomatis: isi `CRON_SECRET` (`openssl rand -hex 32`), `OWNER_USER_ID` (Authentication → Users → User UID), dan `SUPABASE_SERVICE_ROLE_KEY` (Project Settings → API → secret key) sebagai Environment Variables Vercel, dan jalankan `supabase/migrations/20261012100000_service_role_sync_grants.sql`. `vercel.json` sudah menjadwalkannya tiap hari 05:00 WIB (D-024).
+6b. Brief harian terjadwal: setelah menekan "Aktifkan brief harian" di Dashboard dan mengisi `ANTHROPIC_API_KEY` di Vercel, `vercel.json` menjadwalkan `/api/cron/brief` tiap hari 05:30 WIB (D-026). Tanpa persetujuan dan kunci, job tidak mengirim apa pun.
 6. (Opsional, berbayar) Brief harian: isi `ANTHROPIC_API_KEY` (console.anthropic.com), lalu aktifkan dari kartu "Brief harian" di Dashboard. Model Haiku 5.5, biaya sub-sen per brief (D-018).
 7. `pnpm install && pnpm dev`, buka http://localhost:3000.
 

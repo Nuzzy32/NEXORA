@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/elearning", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/brief", "schedule": "30 22 * * *" }
+  ]
+}

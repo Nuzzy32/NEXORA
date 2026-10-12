@@ -1,5 +1,7 @@
 import "server-only";
-import { listProjects } from "@/features/projects/queries";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { taskCounts } from "@/features/projects/queries";
+import { PROJECT_COLUMNS, type Project, type ProjectWithCounts } from "@/features/projects/schema";
 import { requireUser } from "@/lib/auth/session";
 import { addDays, todayISO } from "@/lib/date";
 import {
@@ -35,11 +37,21 @@ const UNDEFINED_COLUMN = "42703";
 /**
  * Loads exactly the rows the brief is built from, then builds the model input. Titles, statuses, dates and counts only:
  * note bodies, descriptions and memory are never selected.
+ * `userId` is applied to every query on purpose: the cron job calls this with a service-role client that bypasses RLS,
+ * so the filter, not RLS, is what keeps the read to one owner. In the signed-in path RLS says the same thing twice.
  */
-export async function loadBriefInput(): Promise<BriefInput> {
-  const { supabase } = await requireUser();
-  const today = todayISO();
-  const projects = await listProjects("open");
+export async function loadBriefInputFor(supabase: SupabaseClient, userId: string, today: string): Promise<BriefInput> {
+  const { data: rows, error: projectError } = await supabase
+    .from("projects")
+    .select(PROJECT_COLUMNS)
+    .eq("user_id", userId)
+    .in("status", ["active", "on_hold"])
+    .order("updated_at", { ascending: false })
+    .limit(200)
+    .overrideTypes<Project[]>();
+  if (projectError) throw new Error("Gagal memuat data brief.");
+  const counts = await taskCounts(supabase, rows.map((p) => p.id));
+  const projects: ProjectWithCounts[] = rows.map((p) => ({ ...p, ...(counts.get(p.id) ?? { open_count: 0, done_count: 0 }) }));
   const ids = projects.slice(0, MAX_PROJECTS).map((p) => p.id);
 
   const none = { data: [], error: null };
@@ -49,6 +61,7 @@ export async function loadBriefInput(): Promise<BriefInput> {
       : supabase
           .from("tasks")
           .select("project_id,title,status,priority,due_date,updated_at")
+          .eq("user_id", userId)
           .in("project_id", ids)
           .neq("status", "done")
           .limit(1000)
@@ -58,6 +71,7 @@ export async function loadBriefInput(): Promise<BriefInput> {
       : supabase
           .from("tasks")
           .select("project_id,completed_at")
+          .eq("user_id", userId)
           .in("project_id", ids)
           .eq("status", "done")
           .order("completed_at", { ascending: false })
@@ -68,6 +82,7 @@ export async function loadBriefInput(): Promise<BriefInput> {
       : supabase
           .from("project_notes")
           .select("project_id,title,updated_at")
+          .eq("user_id", userId)
           .eq("kind", "decision")
           .in("project_id", ids)
           .order("updated_at", { ascending: false })
@@ -77,6 +92,7 @@ export async function loadBriefInput(): Promise<BriefInput> {
     supabase
       .from("tasks")
       .select("title,due_date")
+      .eq("user_id", userId)
       .eq("source", "elearning")
       .neq("status", "done")
       .gte("due_date", addDays(today, -30))
@@ -97,4 +113,10 @@ export async function loadBriefInput(): Promise<BriefInput> {
     decisions: decisions.data,
     coursework: coursework.error ? [] : coursework.data,
   });
+}
+
+/** The signed-in owner's input (RLS applies on top of the explicit user filter). */
+export async function loadBriefInput(): Promise<BriefInput> {
+  const { user, supabase } = await requireUser();
+  return loadBriefInputFor(supabase, user.id, todayISO());
 }

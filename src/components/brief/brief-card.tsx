@@ -86,7 +86,8 @@ export async function BriefCard() {
               Jalur ini berbayar per token dari akun API-mu. Perkiraan batas atas{" "}
               <span className="font-mono text-[12px] text-fg">≈ {formatUSD(maxCostEstimateUSD())}</span> per brief (perkiraan,
               dengan keluaran maksimal {fmt(MAX_OUTPUT_TOKENS)} token); angka sebenarnya muncul setelah brief dibuat. Dibuat
-              sekali saat dashboard dibuka, bisa kamu matikan kapan saja.
+              sekali sehari: otomatis tiap pagi sekitar 05.30 WIB (pada versi yang di-deploy ke Vercel) atau saat dashboard
+              dibuka, mana yang lebih dulu. Bisa kamu matikan kapan saja.
             </p>
           </div>
           <div className="shrink-0">

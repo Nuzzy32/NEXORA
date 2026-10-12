@@ -19,7 +19,7 @@ import type { TrackedItem } from "./tracking";
 
 const NO_TASKS: TaskCounts = { open_count: 0, done_count: 0 };
 
-async function taskCounts(supabase: SupabaseClient, projectIds: string[]) {
+export async function taskCounts(supabase: SupabaseClient, projectIds: string[]) {
   const counts = new Map<string, TaskCounts>();
   if (projectIds.length === 0) return counts;
   const { data, error } = await supabase

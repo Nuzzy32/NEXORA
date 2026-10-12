@@ -12,7 +12,7 @@ const base = ["UID:1234@hebat.elearning.unair.ac.id", "SUMMARY:Tugas 1 is due", 
 const parse = (text: string) => parseIcal(text, NOW, TZ);
 
 describe("parseIcal", () => {
-  it("drops the \"is due\" wording and tags the title with the course code so equal titles stay apart", () => {
+  it("drops the \"is due\" wording and prefixes the course name so equal titles stay apart", () => {
     const course = "CATEGORIES:2026Ganjil - SIA302 - Perencanaan Arsitektur Perusahaan (praktikum) - S1 - Sistem Informasi - 2021 - I4";
     const other = "CATEGORIES:2026Ganjil - SID304 - Analisis dan Visualisasi Data (praktikum) - S1 - Sistem Informasi - 2021 - I3";
     const { tasks } = parse(
@@ -21,9 +21,16 @@ describe("parseIcal", () => {
         event("UID:2@x.unair.ac.id", "SUMMARY:UTS jatuh tempo", "DTSTART:20261015T100000Z", other),
         event("UID:3@x.unair.ac.id", "SUMMARY:Laporan akhir", "DTSTART:20261015T100000Z", "CATEGORIES:Mata kuliah tanpa kode"),
         event("UID:4@x.unair.ac.id", "SUMMARY:is due", "DTSTART:20261015T100000Z"),
+        event("UID:5@x.unair.ac.id", "SUMMARY:Kuis 2", "DTSTART:20261015T100000Z", "CATEGORIES:2026Ganjil - SIA302"),
       ),
     );
-    expect(tasks.map((t) => t.title)).toEqual(["SIA302 · UTS", "SID304 · UTS", "Laporan akhir", "is due"]);
+    expect(tasks.map((t) => t.title)).toEqual([
+      "Perencanaan Arsitektur Perusahaan (praktikum) · UTS",
+      "Analisis dan Visualisasi Data (praktikum) · UTS",
+      "Laporan akhir",
+      "is due",
+      "SIA302 · Kuis 2",
+    ]);
   });
 
   it("reads a Moodle deadline: title, course, link, local time", () => {

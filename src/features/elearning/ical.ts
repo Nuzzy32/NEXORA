@@ -130,8 +130,16 @@ function localDue(prop: Prop, appZone: string): { date: string; time: string | n
 /** Moodle words every deadline as "<activity> is due" (or "jatuh tempo" in Indonesian); the date already says that. */
 const cleanTitle = (summary: string) => summary.replace(/\s+(is due|jatuh tempo)\s*$/i, "").trim() || summary;
 
-/** "2026Ganjil - SIA302 - Perencanaan ..." -> "SIA302": a short course tag, so equal titles ("UTS") stay apart. */
-const courseCode = (course: string) => /(?:^|\s-\s)([A-Z]{2,4}\d{3})(?:\s-\s|$)/.exec(course)?.[1] ?? "";
+/**
+ * "2026Ganjil - SIA302 - Perencanaan Arsitektur Perusahaan (praktikum) - S1 - ..." -> "Perencanaan Arsitektur Perusahaan (praktikum)":
+ * the course name sits right after its code, so equal titles ("UTS") stay apart. Falls back to the bare code, then to nothing.
+ */
+function courseLabel(course: string): string {
+  const parts = course.split(" - ").map((p) => p.trim());
+  const at = parts.findIndex((p) => /^[A-Z]{2,4}\d{3}$/.test(p));
+  if (at < 0) return "";
+  return parts[at + 1] || parts[at];
+}
 
 /** "Quiz 1 opens" / "... dibuka" is an opening notice, not a deadline. */
 const isOpening = (summary: string) => /\b(opens|dibuka)\s*$/i.test(summary);
@@ -169,8 +177,8 @@ export function parseIcal(text: string, now: Date, timeZone: string): { tasks: S
       [[head, /^https:\/\//i.test(link) ? link : ""].filter(Boolean).join("\n"), body].filter(Boolean).join("\n\n"),
       DESCRIPTION_MAX,
     );
-    const code = courseCode(course);
-    const title = truncate(code ? `${code} · ${cleanTitle(summary)}` : cleanTitle(summary), TITLE_MAX);
+    const label = courseLabel(course);
+    const title = truncate(label ? `${label} · ${cleanTitle(summary)}` : cleanTitle(summary), TITLE_MAX);
     byId.set(uid, { external_id: uid, title, due_date: due.date, description });
   };
 
