@@ -137,6 +137,12 @@ export function Inspector({
                 {provider.isMock && (
                   <p className="mt-1 text-muted">Tiruan untuk pengembangan. Berjalan di server Nexora dan tidak memanggil layanan luar.</p>
                 )}
+                {provider.price && (
+                  <p className="mt-1 text-muted">
+                    Anthropic API, berbayar dari akun API-mu: <span className="font-mono text-[12px] text-fg">{provider.price}</span>.
+                    Biaya nyata tiap balasan tampil di bawahnya.
+                  </p>
+                )}
               </div>
             ) : (
               <p className="mt-1.5 text-[13px] text-muted">Tidak ada provider terpilih.</p>

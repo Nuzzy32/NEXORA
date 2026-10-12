@@ -49,6 +49,7 @@ const GO_TO = [
   { id: "projects", title: "Projects", href: "/projects" },
   { id: "ai", title: "AI Workspace", href: "/ai" },
   { id: "memory", title: "Memory", href: "/memory" },
+  { id: "learning", title: "Learning", href: "/learning" },
   { id: "settings", title: "Settings", href: "/settings" },
 ];
 

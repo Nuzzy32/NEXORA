@@ -91,6 +91,7 @@ describe("buildPalette", () => {
         ["Projects", "/projects"],
         ["AI Workspace", "/ai"],
         ["Memory", "/memory"],
+        ["Learning", "/learning"],
         ["Settings", "/settings"],
       ]);
       expect(options.some((o) => o.kind === "create")).toBe(false);

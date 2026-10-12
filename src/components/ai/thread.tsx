@@ -12,6 +12,8 @@ export type ViewMessage = Message & {
   time: string;
   /** Readable name of the provider that answered. */
   providerLabel: string | null;
+  /** "1.234 → 567 token · ≈ $0.0004" for a paid reply, built on the server; null otherwise. */
+  usage: string | null;
 };
 
 const meta = "flex flex-wrap items-center gap-x-2 font-mono text-[11px] text-muted";
@@ -85,6 +87,7 @@ export function Thread({
                 {m.model && <><span aria-hidden>•</span><span>{m.model}</span></>}
                 <span aria-hidden>•</span>
                 <time>{m.time}</time>
+                {m.usage && <><span aria-hidden>•</span><span title="Perkiraan biaya dari token yang dilaporkan Anthropic">{m.usage}</span></>}
               </p>
               {m.status === "error" ? (
                 <div role="alert" className="w-full max-w-[min(100%,42rem)] rounded-lg rounded-tl-none border border-danger/40 bg-danger/5 px-4 py-3">

@@ -4,14 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/ui/icons";
 
-// Only routes that actually exist are listed (PRD: no false capability claims). Learning comes later.
-// `desktopOnly`: the mobile tab bar is full at five, so Settings sits in the top bar there (AccountMenu).
+// Only routes that actually exist are listed (PRD: no false capability claims).
+// `desktopOnly`: the mobile tab bar is full at five, so Learning and Settings sit in the top bar there (AccountMenu).
 const ITEMS: { href: string; label: string; icon: IconName; desktopOnly?: boolean }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/tasks", label: "Tasks", icon: "tasks" },
   { href: "/projects", label: "Projects", icon: "projects" },
   { href: "/ai", label: "AI Workspace", icon: "ai" },
   { href: "/memory", label: "Memory", icon: "memory" },
+  { href: "/learning", label: "Learning", icon: "book", desktopOnly: true },
   { href: "/settings", label: "Settings", icon: "settings", desktopOnly: true },
 ];
 

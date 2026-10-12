@@ -4,13 +4,14 @@ import { Panel } from "@/components/dashboard/panel";
 import { buttonClass } from "@/components/ui/button";
 import { agoSince } from "@/features/elearning/plan";
 import { getElearningStatus } from "@/features/elearning/status";
+import { CLAUDE_MODELS, priceLabel } from "@/features/ai/providers/anthropic";
 import { listProviders } from "@/features/ai/providers/registry";
 import { maxCostEstimateUSD } from "@/features/brief/input";
 import { BRIEF_MODEL, formatUSD } from "@/features/brief/schema";
 import { countsFor, describeCounts } from "@/features/settings/delete";
 import { getDataCounts, getOwnerSettings } from "@/features/settings/queries";
 import { formatDate, localDate, todayISO } from "@/lib/date";
-import { BriefToggle } from "./brief-toggle";
+import { ConsentToggle } from "./consent-toggle";
 import { DangerList, type DangerItem } from "./danger-zone";
 import { ExportButton } from "./export-button";
 import { PrefsForm } from "./prefs-form";
@@ -26,8 +27,9 @@ const failedLoad = (what: string) => (
 export async function IntegrationsSection() {
   await io(); // "N menit lalu" and "today" depend on the clock
   const [elearning, settings] = await Promise.all([getElearningStatus(), getOwnerSettings()]);
-  const providers = listProviders();
   const hasKey = Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+  const chatOn = settings?.chatEnabled ?? false;
+  const providers = listProviders(chatOn);
   const today = todayISO();
   const ago = elearning.lastSyncedAt ? agoSince(elearning.lastSyncedAt) : null;
   const briefOn = settings?.briefEnabled ?? false;
@@ -81,7 +83,7 @@ export async function IntegrationsSection() {
               <StatusPill tone="off">Mati</StatusPill>
             )
           }
-          action={(hasKey || briefOn) && settings && <BriefToggle enabled={briefOn} />}
+          action={(hasKey || briefOn) && settings && <ConsentToggle kind="brief" enabled={briefOn} />}
         >
           <SecretState name="ANTHROPIC_API_KEY" filled={hasKey} />
           <p className={note}>
@@ -98,11 +100,46 @@ export async function IntegrationsSection() {
         </SettingRow>
 
         <SettingRow
-          name="Provider chat AI"
-          status={providers.length === 0 ? <StatusPill tone="off">Belum terhubung</StatusPill> : undefined}
+          name="Chat Claude"
+          status={
+            !hasKey ? (
+              chatOn ? <StatusPill tone="warn">Aktif, kunci belum diisi</StatusPill> : <StatusPill tone="off">Belum dikonfigurasi</StatusPill>
+            ) : chatOn ? (
+              <StatusPill tone="ok">Aktif</StatusPill>
+            ) : (
+              <StatusPill tone="off">Mati</StatusPill>
+            )
+          }
+          action={(hasKey || chatOn) && settings && <ConsentToggle kind="chat" enabled={chatOn} />}
+        >
+          <SecretState name="ANTHROPIC_API_KEY" filled={hasKey} />
+          <p className={note}>
+            Anthropic API resmi, berbayar per token dari akun API-mu (paket langganan Claude tidak bisa dipakai untuk aplikasi ini).
+            Saat kamu mengirim pesan, hingga 40 pesan terakhir percakapan itu dan memory atau proyek yang kamu lampirkan dikirim ke
+            Anthropic, begitu juga PDF Learning yang kamu minta ringkas. Tidak ada fallback ke model lain.
+          </p>
+          <ul className="space-y-1">
+            {Object.entries(CLAUDE_MODELS).map(([id, m]) => (
+              <li key={id} className="flex flex-wrap gap-x-2 font-mono text-[12px]">
+                <span className="text-fg">{m.label}</span>
+                <span className="text-muted">{priceLabel(id)}</span>
+              </li>
+            ))}
+          </ul>
+          {settings?.chatConsentedAt && chatOn && (
+            <p className="font-mono text-[12px] text-muted">
+              Disetujui {formatDate(localDate(settings.chatConsentedAt), today)}
+            </p>
+          )}
+          {!settings && failedLoad("Status chat")}
+        </SettingRow>
+
+        <SettingRow
+          name="Provider di AI Workspace"
+          status={providers.length === 0 ? <StatusPill tone="off">Belum ada</StatusPill> : undefined}
         >
           {providers.length === 0 ? (
-            <p className={note}>Belum ada provider chat yang terhubung (Phase 0 belum selesai).</p>
+            <p className={note}>Belum ada provider chat yang bisa dipilih. Aktifkan chat Claude di atas.</p>
           ) : (
             <ul className="space-y-1.5">
               {providers.map((p) => (
@@ -184,10 +221,16 @@ export async function DataSection() {
           hint: "Hanya task yang berasal dari e-learning. Sinkron berikutnya mengimpor ulang tugas yang masih ada di kalender.",
         },
         {
+          category: "documents",
+          title: "Dokumen Learning",
+          dialogTitle: "Hapus semua dokumen Learning?",
+          hint: "Semua PDF di penyimpanan beserta metadata dan ringkasannya.",
+        },
+        {
           category: "all",
           title: "Semua data NEXORA",
           dialogTitle: "Hapus semua data NEXORA?",
-          hint: "Proyek, task, catatan, memory, percakapan, brief, dan status sinkron. Brief harian dimatikan dan persetujuannya dicabut. Akun masuk (Supabase Auth) tetap ada.",
+          hint: "Proyek, task, catatan, memory, percakapan, brief, dokumen Learning beserta berkas PDF-nya, dan status sinkron. Brief harian dan chat Claude dimatikan dan persetujuannya dicabut. Akun masuk (Supabase Auth) tetap ada.",
         },
   ];
   const items: DangerItem[] = counts ? base.map((i) => ({ ...i, summary: describeCounts(countsFor(i.category, counts)) })) : [];
@@ -197,7 +240,8 @@ export async function DataSection() {
       <Panel id="export" title="Ekspor data">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <p className={`min-w-0 flex-1 basis-72 ${note}`}>
-            Satu berkas JSON berisi proyek, task, catatan, memory, percakapan, brief, pengaturan, dan status sinkron milikmu.
+            Satu berkas JSON berisi proyek, task, catatan, memory, percakapan, brief, metadata dan ringkasan dokumen Learning,
+            pengaturan, dan status sinkron milikmu. Berkas PDF tidak ikut; unduh dari halaman Learning.
             Tidak berisi kunci API, URL e-learning, atau variabel environment apa pun.
           </p>
           <ExportButton />

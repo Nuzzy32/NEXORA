@@ -75,8 +75,11 @@ export function Workspace({
       context: context.items.length
         ? { items: context.items.map(({ kind, title }) => ({ kind, title })), chars: context.chars }
         : null,
+      input_tokens: null,
+      output_tokens: null,
       time: "",
       providerLabel: null,
+      usage: null,
     },
   ]);
 

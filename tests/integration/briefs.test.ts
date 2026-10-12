@@ -115,6 +115,13 @@ describe("owner_settings", () => {
     await as(A, "update public.owner_settings set brief_enabled = false, brief_consented_at = null");
   });
 
+  it("cannot enable chat without a consent timestamp (D-027)", async () => {
+    await expect(as(A, "insert into public.owner_settings (chat_enabled) values (true)")).rejects.toThrow(/check/);
+    await as(A, "insert into public.owner_settings (chat_enabled, chat_consented_at) values (true, now())");
+    await expect(as(A, "update public.owner_settings set chat_consented_at = null")).rejects.toThrow(/check/);
+    await as(A, "update public.owner_settings set chat_enabled = false, chat_consented_at = null");
+  });
+
   it("allows one row per user", async () => {
     await enable(A);
     await expect(enable(A)).rejects.toThrow(/unique|duplicate/);

@@ -13,8 +13,10 @@ export type AiProvider = {
   isMock: boolean;
   available(): boolean;
   /** One request, one full answer (no streaming yet). Throw `ProviderError` for a failure that is safe to show. */
-  complete(messages: ChatMessage[]): Promise<{ content: string; model: string }>;
+  complete(messages: ChatMessage[]): Promise<Completion>;
 };
+
+export type Completion = { content: string; model: string; usage?: { inputTokens: number; outputTokens: number } };
 
 /** A provider failure whose message is safe to show the user and store (never a raw upstream error). */
 export class ProviderError extends Error {}

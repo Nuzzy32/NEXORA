@@ -60,8 +60,11 @@ export type Message = {
   created_at: string;
   /** Snapshot of the attached context (user messages only). */
   context: MessageContext | null;
+  /** Token counts reported by a real provider; null for the mock and older replies. */
+  input_tokens: number | null;
+  output_tokens: number | null;
 };
-export const MESSAGE_COLUMNS = "id,role,content,provider_id,model,status,error,created_at,context";
+export const MESSAGE_COLUMNS = "id,role,content,provider_id,model,status,error,created_at,context,input_tokens,output_tokens";
 
 const blankToUndefined = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
 
@@ -97,4 +100,4 @@ export function titleFromMessage(content: string, max = 60): string {
 
 export const NO_PROVIDER_TITLE = "Belum ada provider AI yang terhubung";
 export const NO_PROVIDER_HINT =
-  "Integrasi menunggu hasil verifikasi Phase 0 (lihat docs/PRD.md §6). Riwayat percakapan tetap bisa dibaca.";
+  "Chat Claude memakai Anthropic API berbayar dan baru muncul setelah diaktifkan di Settings. Riwayat percakapan tetap bisa dibaca.";

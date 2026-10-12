@@ -37,17 +37,54 @@ async function loadHistory(supabase: SupabaseClient, conversationId: string, bef
   return data.reverse();
 }
 
-type Reply = { ok: true; content: string; model: string } | { ok: false; error: string };
+/** The owner's chat opt-in (D-027). Unreadable settings count as "off", so a paid provider is never resolved by mistake. */
+async function chatEnabled(supabase: SupabaseClient): Promise<boolean> {
+  const { data } = await supabase.from("owner_settings").select("chat_enabled").maybeSingle<{ chat_enabled: boolean }>();
+  return data?.chat_enabled ?? false;
+}
+
+type Usage = { input_tokens: number | null; output_tokens: number | null };
+type Reply = ({ ok: true; content: string; model: string } & Usage) | { ok: false; error: string };
 
 /** Calls the provider. Only a ProviderError message reaches the user or the database; anything else becomes a generic one. */
 async function ask(provider: AiProvider, context: ChatMessage[]): Promise<Reply> {
   try {
-    const { content, model } = await provider.complete(context);
+    const { content, model, usage } = await provider.complete(context);
     if (content.trim() === "") return { ok: false, error: "Provider mengembalikan balasan kosong." };
-    return { ok: true, content: content.slice(0, MAX_REPLY), model: model.slice(0, 120) };
+    return {
+      ok: true,
+      content: content.slice(0, MAX_REPLY),
+      model: model.slice(0, 120),
+      input_tokens: usage?.inputTokens ?? null,
+      output_tokens: usage?.outputTokens ?? null,
+    };
   } catch (e) {
     return { ok: false, error: (e instanceof ProviderError ? e.message : "Provider gagal merespons. Coba lagi.").slice(0, 500) };
   }
+}
+
+const usageOf = (r: Usage): Usage => ({ input_tokens: r.input_tokens, output_tokens: r.output_tokens });
+
+/** Consent: the only place `chat_enabled` becomes true, and only from the opt-in button. Nothing is sent yet. */
+export async function enableChat(): Promise<ActionState> {
+  const { user, supabase } = await requireUser();
+  const { error } = await supabase
+    .from("owner_settings")
+    .upsert({ user_id: user.id, chat_enabled: true, chat_consented_at: new Date().toISOString() }, { onConflict: "user_id" });
+  if (error) return failed("Chat Claude gagal diaktifkan. Coba lagi.");
+  refreshApp();
+  return { status: "ok", message: "Chat Claude diaktifkan." };
+}
+
+/** Turning it off clears the consent time; Claude disappears from the selector, the history stays readable. */
+export async function disableChat(): Promise<ActionState> {
+  const { user, supabase } = await requireUser();
+  const { error } = await supabase
+    .from("owner_settings")
+    .upsert({ user_id: user.id, chat_enabled: false, chat_consented_at: null }, { onConflict: "user_id" });
+  if (error) return failed("Chat Claude gagal dimatikan. Coba lagi.");
+  refreshApp();
+  return { status: "ok", message: "Chat Claude dimatikan." };
 }
 
 export async function createConversation(): Promise<ActionState> {
@@ -67,7 +104,7 @@ export async function sendMessage(conversationId: string, providerId: string, co
   const parsed = messageInputSchema.safeParse({ conversationId, providerId, content });
   if (!parsed.success) return failed(parsed.error.issues[0].message);
   const { conversationId: cid, providerId: pid, content: text } = parsed.data;
-  const provider = getProvider(pid);
+  const provider = getProvider(pid, await chatEnabled(supabase));
   if (!provider) return failed("Provider tidak tersedia.");
 
   const { data: conversation, error: findError } = await supabase
@@ -98,7 +135,7 @@ export async function sendMessage(conversationId: string, providerId: string, co
 
   const reply = await ask(provider, selectContext(history, text, bundle.text));
   const row = reply.ok
-    ? { role: "assistant", content: reply.content, model: reply.model, provider_id: provider.id }
+    ? { role: "assistant", content: reply.content, model: reply.model, provider_id: provider.id, ...usageOf(reply) }
     : { role: "assistant", status: "error", error: reply.error, provider_id: provider.id };
   const { error: replyError } = await supabase.from("messages").insert({ conversation_id: cid, ...row });
   refreshApp();
@@ -112,7 +149,7 @@ export async function retryMessage(messageId: string, providerId: string): Promi
   const id = idSchema.safeParse(messageId);
   const pid = z.string().min(1).max(64).safeParse(providerId);
   if (!id.success || !pid.success) return failed("Pesan tidak ditemukan.");
-  const provider = getProvider(pid.data);
+  const provider = getProvider(pid.data, await chatEnabled(supabase));
   if (!provider) return failed("Provider tidak tersedia.");
 
   const { data: target, error } = await supabase
@@ -135,7 +172,7 @@ export async function retryMessage(messageId: string, providerId: string): Promi
   }
   const reply = await ask(provider, selectContext(history, "", bundle.text));
   const patch = reply.ok
-    ? { content: reply.content, model: reply.model, provider_id: provider.id, status: "complete", error: null }
+    ? { content: reply.content, model: reply.model, provider_id: provider.id, ...usageOf(reply), status: "complete", error: null }
     : { error: reply.error, provider_id: provider.id };
   const { data, error: updateError } = await supabase
     .from("messages")

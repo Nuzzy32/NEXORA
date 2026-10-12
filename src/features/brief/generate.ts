@@ -31,7 +31,7 @@ export const SYSTEM_PROMPT = `Kamu asisten ringkas untuk satu pemilik workspace 
 export type GeneratedBrief = { content: BriefContent; model: string; inputTokens: number; outputTokens: number };
 
 /** Maps an SDK failure to a message that is safe to show: no key, no prompt, no raw upstream text. Most specific class first. */
-export function describeSdkError(e: unknown): string {
+export function describeSdkError(e: unknown, fallback = "Brief gagal dibuat. Coba lagi."): string {
   if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError)
     return "Kunci Anthropic API ditolak. Periksa ANTHROPIC_API_KEY di environment server.";
   if (e instanceof Anthropic.RateLimitError) return "Anthropic API membatasi permintaan untuk sementara. Coba lagi beberapa saat lagi.";
@@ -39,7 +39,7 @@ export function describeSdkError(e: unknown): string {
     return "Anthropic API menolak permintaan. Periksa saldo kredit dan pengaturan akun API.";
   if (e instanceof Anthropic.APIConnectionError) return "Tidak bisa menjangkau Anthropic API. Periksa koneksi, lalu coba lagi.";
   if (e instanceof Anthropic.APIError) return "Anthropic API sedang bermasalah. Coba lagi nanti.";
-  return "Brief gagal dibuat. Coba lagi.";
+  return fallback;
 }
 
 /** Matches the model's project names to the input's (case-insensitive), uses the input spelling, drops unknown and repeated ones. */

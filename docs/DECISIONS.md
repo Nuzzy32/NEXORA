@@ -163,7 +163,22 @@ Halaman `/settings` memenuhi PRD §5.6 (SET-01 sampai SET-04).
 - **Isolasi data:** klien admin melewati RLS, jadi `loadBriefInputFor(supabase, userId, today)` memberi `.eq("user_id", userId)` pada setiap query (proyek, task, catatan, tugas kuliah); jalur pengguna memakai fungsi yang sama dengan `user.id`, sehingga satu kode untuk kedua jalur.
 - Balasan cron hanya berisi status, jumlah token, atau kalimat tetap: tanpa isi brief, input, atau galat pustaka. Orkestrasi (`runBriefCron`) murni dengan dependensi yang disuntikkan, diuji tanpa database atau jaringan. Belum teruji terhadap Anthropic API sungguhan (tidak ada kunci di mesin ini).
 
+## D-027 — Chat Claude lewat Anthropic API; Phase 0 untuk Anthropic (2026-10-12)
+- **Phase 0 (Anthropic):** jalur resmi untuk aplikasi web yang di-host adalah Anthropic API dengan API key, berbayar per token. Langganan Claude (Pro/Max/Team, termasuk Team Standard) tidak bisa dipakai oleh aplikasi pihak ketiga, jadi tidak dipakai (PRD §18 no. 3). OpenAI belum diperiksa dan tetap tidak tersedia.
+- **Persetujuan:** pemilik memilih "dua-duanya" (chat Claude lalu Learning OS) pada 2026-10-12. Seperti brief (D-018), chat opt-in lewat tombol "Aktifkan chat Claude" di Settings: `owner_settings.chat_enabled` + `chat_consented_at` (CHECK, migration `20261013100000_chat_consent.sql`). Tanpa persetujuan atau tanpa `ANTHROPIC_API_KEY`, provider Claude tidak didaftar dan server action menolaknya (`getProvider(id, chatEnabled)`); setelan yang gagal dibaca dianggap mati. Mematikan menghapus jejak persetujuan; "Hapus semua" ikut mematikannya.
+- **Model:** dua provider, `claude-haiku-5-5` ($0,10/$0,50 per 1 juta token) dan `claude-sonnet-5-5` ($2/$10), harga per 2026-10 di `CLAUDE_MODELS`. Non-streaming, `max_tokens` 8000 (setara batas kolom balasan), `effort: "low"`, thinking adaptif bawaan, tanpa parameter sampling. Pesan `system` NEXORA (konteks pilihan pengguna) digabung ke `system` API; riwayat dimulai dari pesan user pertama. Tanpa `fallbacks` server-side: penolakan ditampilkan sebagai penolakan, tidak dijalankan ulang di model lain (aturan 3, AI-07).
+- **Biaya terlihat:** `messages.input_tokens/output_tokens` menyimpan token yang dilaporkan Anthropic; balasan menampilkan "token masuk → keluar · ≈ $biaya". Inspektur menampilkan tarif model terpilih. Galat SDK dipetakan ke kalimat tetap (`describeSdkError`), tanpa teks mentah.
+- Belum: streaming, prompt caching (prefix percakapan pendek), batas biaya harian untuk chat.
+
+## D-028 — Learning OS: PDF dan ringkasan (2026-10-12)
+- **Penyimpanan:** bucket Supabase Storage privat `documents` (20 MB, hanya `application/pdf`, ditegakkan bucket) di jalur `<user_id>/<document_id>.pdf`; policy `storage.objects` hanya mengizinkan folder milik sendiri (select, insert, delete; tanpa update). Tabel `documents` (RLS, migration `20261013110000_documents.sql`). Menjawab PRD §18 no. 6: batas 20 MB, disimpan sampai pemilik menghapusnya.
+- **Upload:** body server action di Vercel dibatasi 4,5 MB, jadi browser mengunggah langsung ke Storage dengan token signed upload URL sekali pakai dari server (`startUpload`), lalu `finishUpload` memeriksa ukuran dan tipe lewat `info()` sebelum status menjadi `ready`. Baris yang tertinggal di `uploading` bisa dihapus dari UI. Membuka PDF lewat route `/learning/file/[id]` yang mengalihkan ke signed URL 60 detik.
+- **Ringkasan (LEARN-03/05):** hanya saat pemilik menekan "Buat ringkasan", dan hanya bila chat Claude sudah diaktifkan (D-027) dan kunci ada. Server mengunduh PDF, memeriksa header `%PDF-`, menghitung token dengan `count_tokens` (gratis) dan menolak di atas 100.000 token (tetap di tarif Haiku ≤100K, maks ±$0,012 per ringkasan), lalu satu permintaan ke `claude-haiku-5-5` dengan blok `document` base64. Hasilnya `summary_draft`; baru menjadi `summary` setelah pemilik meninjau, boleh mengubah, dan menyimpan. Token tersimpan dan biaya tampil.
+- **Data pemilik:** ekspor memuat metadata dan ringkasan (bukan berkas PDF). Hapus kategori "Dokumen Learning" dan "Hapus semua" menghapus berkas di Storage lebih dulu, baru barisnya; bila Storage gagal, tidak ada yang dihapus.
+- **Navigasi:** "Learning" di sidebar desktop, ikon di bilah atas ponsel (tab bar penuh), dan di command palette.
+- Belum: kuis dan flashcard (LEARN-04), progres dan pengulangan (LEARN-06), pencarian isi PDF.
+- Migration D-027/D-028 teruji di PGlite (dengan stand-in skema `storage`) dan diterapkan ke Supabase produksi 2026-10-12 lewat MCP; advisor keamanan tidak menemukan masalah baru.
+
 ## Pertanyaan terbuka
-- Phase 0: jalur resmi OpenAI dan Anthropic untuk aplikasi web hosted (PRD §18 no. 1–3).
-- Batas ukuran dan retensi PDF (no. 6). Full-text search Postgres cukup untuk memory MVP? (no. 7). GitHub sejak awal? (no. 8; asumsi: tidak).
-- Supabase project belum dibuat; migration baru teruji di PGlite (D-010), belum di Supabase nyata.
+- Phase 0: jalur resmi OpenAI untuk aplikasi web hosted (PRD §18 no. 1–2). Anthropic: lihat D-027.
+- Full-text search Postgres cukup untuk memory MVP? (no. 7). GitHub sejak awal? (no. 8; asumsi: tidak).

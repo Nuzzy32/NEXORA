@@ -16,6 +16,14 @@ export async function AccountMenu() {
         {user.email}
       </p>
       <Link
+        href="/learning"
+        aria-label="Learning"
+        title="Learning"
+        className="grid size-11 place-items-center rounded-md text-muted transition-colors hover:bg-raised hover:text-fg md:hidden"
+      >
+        <Icon name="book" className="size-[18px]" />
+      </Link>
+      <Link
         href="/settings"
         aria-label="Settings"
         title="Settings"

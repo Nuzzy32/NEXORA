@@ -30,9 +30,22 @@ describe("provider registry", () => {
     expect(getProvider("anthropic")).toBeUndefined();
   });
 
+  it("lists Claude only with consent and a key, before the mock", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    expect(listProviders(true)).toEqual([]);
+    vi.stubEnv("ANTHROPIC_API_KEY", "sk-test");
+    expect(listProviders(false)).toEqual([]);
+    expect(listProviders(true).map((p) => p.id)).toEqual(["claude-haiku-5-5", "claude-sonnet-5-5"]);
+    expect(getProvider("claude-haiku-5-5")).toBeUndefined();
+    vi.stubEnv("NODE_ENV", "development");
+    expect(listProviders(true).map((p) => p.id)).toEqual(["claude-haiku-5-5", "claude-sonnet-5-5", "mock"]);
+  });
+
   it("keeps a readable label for old mock replies even in production", () => {
     vi.stubEnv("NODE_ENV", "production");
     expect(providerLabel("mock")).toBe("MOCK · DEV");
+    expect(providerLabel("claude-sonnet-5-5")).toBe("Claude Sonnet 5.5");
     expect(providerLabel("other")).toBe("other");
   });
 });

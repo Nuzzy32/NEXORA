@@ -3,7 +3,8 @@
 import { failed, invalid, type ActionState } from "@/lib/action-state";
 import { requireUser } from "@/lib/auth/session";
 import { refreshApp } from "@/lib/revalidate";
-import { DELETE_PLANS, describeCounts, SETTINGS_RESET, type DataTable } from "./delete";
+import { DOCUMENTS_BUCKET } from "@/features/learning/schema";
+import { DELETE_PLANS, describeCounts, removesFiles, SETTINGS_RESET, type DataTable } from "./delete";
 import { parseDeleteRequest, parsePrefsForm, PREFS_FIELDS } from "./schema";
 
 /** Preference columns only: the upsert never names the brief columns, so consent is left exactly as it was. */
@@ -26,6 +27,14 @@ export async function deleteData(category: string, _prev: ActionState, formData:
   const parsed = parseDeleteRequest(category, formData.get("confirm"));
   if (!parsed.success) return invalid(parsed.error, formData, ["confirm"]);
 
+  // Files first: a row is the only handle to its file, so rows must never go while their files stay.
+  if (removesFiles(parsed.data.category)) {
+    const bucket = supabase.storage.from(DOCUMENTS_BUCKET);
+    const { data: files, error } = await bucket.list(user.id, { limit: 1000 });
+    const removed = error ? { error } : files.length ? await bucket.remove(files.map((f) => `${user.id}/${f.name}`)) : { error: null };
+    if (removed.error) return failed("Berkas PDF gagal dihapus dari penyimpanan. Tidak ada data yang dihapus; coba lagi.");
+  }
+
   const deleted: Partial<Record<DataTable, number>> = {};
   for (const step of DELETE_PLANS[parsed.data.category]) {
     const base = supabase.from(step.table).delete({ count: "exact" });
@@ -40,7 +49,7 @@ export async function deleteData(category: string, _prev: ActionState, formData:
     const { error } = await supabase.from("owner_settings").update(SETTINGS_RESET).eq("user_id", user.id);
     if (error) {
       refreshApp();
-      return failed("Data terhapus, tetapi pengaturan gagal direset. Matikan brief harian secara manual bila perlu.");
+      return failed("Data terhapus, tetapi pengaturan gagal direset. Matikan brief harian dan chat Claude secara manual bila perlu.");
     }
   }
   refreshApp();

@@ -4,7 +4,8 @@ import { Icon } from "@/components/ui/icons";
 import type { BundleItem } from "@/features/ai/context-bundle";
 import { MAX_CONTEXT_ITEMS, MAX_USER_MESSAGE, NO_PROVIDER_HINT, NO_PROVIDER_TITLE } from "@/features/ai/schema";
 
-export type ProviderOption = { id: string; label: string; isMock: boolean };
+/** `price` is set for a paid provider: "$0,10 input · $0,50 output per 1 juta token". */
+export type ProviderOption = { id: string; label: string; isMock: boolean; price: string | null };
 
 /** Message box + provider picker. Only providers that are available are offered; with none, the box is off. */
 export function Composer({

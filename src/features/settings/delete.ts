@@ -11,7 +11,8 @@ export type DataTable =
   | "conversations"
   | "messages"
   | "daily_briefs"
-  | "integration_syncs";
+  | "integration_syncs"
+  | "documents";
 
 /** `key` is a column that is never null, because PostgREST wants a filter on every delete. `eq` narrows the rows. */
 export type DeleteStep = { table: DataTable; key: "id" | "source"; eq?: readonly [column: string, value: string] };
@@ -24,7 +25,10 @@ export const DELETE_PLANS: Record<DeleteCategory, DeleteStep[]> = {
   conversations: [step("messages"), step("conversations")],
   briefs: [step("daily_briefs")],
   elearning: [step("tasks", ["source", "elearning"])],
+  // the PDF files in Storage are removed by the action before these rows (see `removesFiles`)
+  documents: [step("documents")],
   all: [
+    step("documents"),
     step("messages"),
     step("conversations"),
     step("memory_items"),
@@ -36,8 +40,14 @@ export const DELETE_PLANS: Record<DeleteCategory, DeleteStep[]> = {
   ],
 };
 
-/** After "Hapus semua" the settings row is reset (brief off, consent cleared). The row itself stays: the app role cannot delete it. */
-export const SETTINGS_RESET = { brief_enabled: false, brief_consented_at: null, default_tasks_view: "calendar" } as const;
+/** After "Hapus semua" the settings row is reset (brief and chat off, consent cleared). The row itself stays: the app role cannot delete it. */
+export const SETTINGS_RESET = {
+  brief_enabled: false,
+  brief_consented_at: null,
+  chat_enabled: false,
+  chat_consented_at: null,
+  default_tasks_view: "calendar",
+} as const;
 
 const LABEL: Record<DataTable, string> = {
   projects: "proyek",
@@ -48,7 +58,11 @@ const LABEL: Record<DataTable, string> = {
   messages: "pesan",
   daily_briefs: "brief",
   integration_syncs: "status sinkron",
+  documents: "dokumen",
 };
+
+/** Whether a category deletes Learning documents, whose PDF files must leave Storage first. */
+export const removesFiles = (category: DeleteCategory) => DELETE_PLANS[category].some((s) => s.table === "documents");
 
 /** "3 proyek, 40 task"; zero counts are left out. Same wording for "will be deleted" and "was deleted". */
 export function describeCounts(counts: Partial<Record<DataTable, number>>): string {

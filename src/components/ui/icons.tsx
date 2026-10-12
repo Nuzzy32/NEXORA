@@ -117,6 +117,7 @@ const PATHS = {
     </>
   ),
   menu: <path d="M3.5 6h13M3.5 10h13M3.5 14h13" />,
+  book: <path d="M10 6.25v10M10 6.25A1.75 1.75 0 0 0 8.25 4.5H3.5v10h4.75A1.75 1.75 0 0 1 10 16.25M10 6.25a1.75 1.75 0 0 1 1.75-1.75h4.75v10h-4.75A1.75 1.75 0 0 0 10 16.25" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;
