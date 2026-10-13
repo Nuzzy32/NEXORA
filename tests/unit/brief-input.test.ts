@@ -20,6 +20,7 @@ const project = (n: number, o: Partial<ProjectWithCounts> = {}): ProjectWithCoun
   id: pid(n),
   name: `Proyek ${n}`,
   summary: "RINGKASAN PANJANG YANG TIDAK BOLEH IKUT",
+  github_repo: null,
   status: "active",
   starts_on: "2026-09-01",
   due_on: "2026-12-01",

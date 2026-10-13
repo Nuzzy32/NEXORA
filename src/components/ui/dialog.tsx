@@ -120,7 +120,7 @@ export function FormDialog({
         }}
         // A stray click on the backdrop must not throw away typed text; Esc and Batal still close.
         onClick={(e) => e.target === ref.current && !dirty.current && close()}
-        className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-lg border border-line-strong bg-overlay p-0 text-fg shadow-[0_24px_64px_-16px_rgb(0_0_0/0.7)] max-md:m-0 max-md:mt-auto max-md:max-h-[92dvh] max-md:w-full max-md:max-w-none max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0"
+        className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-lg border border-line-strong bg-overlay p-0 text-left text-fg shadow-[0_24px_64px_-16px_rgb(0_0_0/0.7)] max-md:m-0 max-md:mt-auto max-md:max-h-[92dvh] max-md:w-full max-md:max-w-none max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0"
       >
         {open && (
           <DialogContext value={{ close, clearDraft }}>

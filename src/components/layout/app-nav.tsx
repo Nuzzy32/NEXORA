@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/ui/icons";
 
 // Only routes that actually exist are listed (PRD: no false capability claims).
-// `desktopOnly`: the mobile tab bar is full at five, so Learning and Settings sit in the top bar there (AccountMenu).
+// `desktopOnly`: the mobile tab bar is full at five, so Learning, Kuliah and Settings sit in the top bar there (AccountMenu).
 const ITEMS: { href: string; label: string; icon: IconName; desktopOnly?: boolean }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/tasks", label: "Tasks", icon: "tasks" },
@@ -13,6 +13,7 @@ const ITEMS: { href: string; label: string; icon: IconName; desktopOnly?: boolea
   { href: "/ai", label: "AI Workspace", icon: "ai" },
   { href: "/memory", label: "Memory", icon: "memory" },
   { href: "/learning", label: "Learning", icon: "book", desktopOnly: true },
+  { href: "/courses", label: "Kuliah", icon: "calendar", desktopOnly: true },
   { href: "/settings", label: "Settings", icon: "settings", desktopOnly: true },
 ];
 

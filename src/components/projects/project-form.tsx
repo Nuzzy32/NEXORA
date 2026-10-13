@@ -47,6 +47,13 @@ export function ProjectForm({ project }: { project?: Project }) {
             />
           </Field>
         </div>
+        <Field label="Repo GitHub (opsional)" htmlFor="github_repo" error={err("github_repo")}>
+          <input
+            id="github_repo" name="github_repo" placeholder="pemilik/nama-repo" maxLength={200} autoCapitalize="off" spellCheck={false}
+            defaultValue={v("github_repo", project?.github_repo)} className={inputClass + " font-mono"}
+            aria-invalid={Boolean(err("github_repo"))} aria-describedby={err("github_repo") ? "github_repo-error" : undefined}
+          />
+        </Field>
         <FormActions pending={pending} message={state.message} saveLabel={project ? "Simpan" : "Buat proyek"} />
       </form>
       {project && (

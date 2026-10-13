@@ -15,7 +15,7 @@ export function parsePrefsForm(formData: FormData) {
 
 // ---- delete requests -----------------------------------------------------------
 
-export const DELETE_CATEGORIES = ["memory", "conversations", "briefs", "elearning", "documents", "all"] as const;
+export const DELETE_CATEGORIES = ["memory", "conversations", "briefs", "elearning", "documents", "courses", "all"] as const;
 export type DeleteCategory = (typeof DELETE_CATEGORIES)[number];
 
 /** Typed by the owner before "Hapus semua data" goes through. */

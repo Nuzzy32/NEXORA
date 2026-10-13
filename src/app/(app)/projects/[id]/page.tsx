@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { GithubPanel } from "@/components/projects/github-panel";
 import { ProjectTimeline } from "@/components/projects/timeline";
 import type { ProjectWithCounts } from "@/features/projects/schema";
 import { buildTimeline } from "@/features/projects/timeline";
@@ -51,7 +52,14 @@ async function ProjectContent({ params, searchParams }: Pick<Props, "params" | "
       <ProjectHeader project={project} today={today} />
       <ProjectTabs projectId={id} current={tab} openTasks={project.open_count} notes={noteCount} />
       {tab === "overview" ? (
-        <OverviewTab projectId={id} openCount={project.open_count} doneCount={project.done_count} today={today} />
+        <>
+          <OverviewTab projectId={id} openCount={project.open_count} doneCount={project.done_count} today={today} />
+          {project.github_repo && (
+            <Suspense fallback={<ListSkeleton rows={2} />}>
+              <GithubPanel repo={project.github_repo} today={today} />
+            </Suspense>
+          )}
+        </>
       ) : tab === "tasks" ? (
         <TasksTab projectId={id} today={today} />
       ) : tab === "timeline" ? (

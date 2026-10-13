@@ -92,6 +92,7 @@ describe("buildPalette", () => {
         ["AI Workspace", "/ai"],
         ["Memory", "/memory"],
         ["Learning", "/learning"],
+        ["Kuliah", "/courses"],
         ["Settings", "/settings"],
       ]);
       expect(options.some((o) => o.kind === "create")).toBe(false);

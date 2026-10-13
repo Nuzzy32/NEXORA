@@ -3,7 +3,7 @@ import type { ProjectWithCounts } from "@/features/projects/schema";
 import { projectStats, updatedAgo } from "@/features/projects/stats";
 
 const project = (status: ProjectWithCounts["status"], open_count: number, done_count: number): ProjectWithCounts => ({
-  id: status + open_count, name: "p", summary: null, status, starts_on: null, due_on: null,
+  id: status + open_count, name: "p", summary: null, status, starts_on: null, due_on: null, github_repo: null,
   updated_at: "2026-10-10T00:00:00Z", open_count, done_count,
 });
 

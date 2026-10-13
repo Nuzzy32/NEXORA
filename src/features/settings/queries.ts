@@ -54,6 +54,8 @@ const COUNTED: DataTable[] = [
   "integration_syncs",
   "documents",
   "flashcards",
+  "courses",
+  "course_sessions",
 ];
 
 /** Row counts shown in the delete dialogs. `null` when any count fails, so the page says so instead of showing zeros. */

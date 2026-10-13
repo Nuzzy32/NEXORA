@@ -50,6 +50,7 @@ const GO_TO = [
   { id: "ai", title: "AI Workspace", href: "/ai" },
   { id: "memory", title: "Memory", href: "/memory" },
   { id: "learning", title: "Learning", href: "/learning" },
+  { id: "courses", title: "Kuliah", href: "/courses" },
   { id: "settings", title: "Settings", href: "/settings" },
 ];
 

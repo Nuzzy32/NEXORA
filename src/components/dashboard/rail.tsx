@@ -4,6 +4,8 @@ import { Icon, type IconName } from "@/components/ui/icons";
 import type { ActivityKind } from "@/features/activity/feed";
 import { listActivity } from "@/features/activity/queries";
 import { clockLabel } from "@/features/ai/group";
+import { listCourses } from "@/features/courses/queries";
+import { hhmm, isoWeekday, WEEKDAY_LABEL } from "@/features/courses/schema";
 import { listConversations } from "@/features/ai/queries";
 import { listMemory } from "@/features/memory/queries";
 import { MEMORY_CATEGORY_LABEL } from "@/features/memory/schema";
@@ -183,6 +185,43 @@ export async function RecentActivity() {
           </li>
         ))}
       </ul>
+    </Panel>
+  );
+}
+
+/** Today's classes of the latest semester (Kuliah, D-032). Hidden when there are none. Inside <Suspense>. */
+export async function TodayClasses() {
+  const data = await listCourses().catch(() => null);
+  if (!data || data.courses.length === 0) return null;
+  const semester = Math.max(...data.courses.map((c) => c.semester));
+  const byId = new Map(data.courses.filter((c) => c.semester === semester).map((c) => [c.id, c]));
+  const day = isoWeekday(todayISO());
+  const today = data.sessions.filter((s) => s.weekday === day && byId.has(s.course_id));
+  return (
+    <Panel
+      id="rail-classes"
+      title="Kuliah hari ini"
+      aside={
+        <Link href="/courses" className="inline-flex min-h-6 items-center font-mono text-[11px] text-muted transition-colors hover:text-fg">
+          Jadwal
+        </Link>
+      }
+    >
+      {today.length === 0 ? (
+        <p className="text-[13px] text-muted">Tidak ada kuliah hari {WEEKDAY_LABEL[day]}.</p>
+      ) : (
+        <ul className="space-y-2">
+          {today.map((s) => (
+            <li key={s.id} className="flex gap-3 text-[13px]">
+              <span className="shrink-0 font-mono text-[12px] text-accent">{hhmm(s.starts_at)}–{hhmm(s.ends_at)}</span>
+              <span className="min-w-0">
+                <span className="block truncate font-medium">{byId.get(s.course_id)?.name}</span>
+                {s.room && <span className="block truncate font-mono text-[11px] text-muted">{s.room}</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </Panel>
   );
 }

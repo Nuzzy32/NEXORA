@@ -20,7 +20,7 @@ describe("parseProjectForm", () => {
 
   it("accepts a minimal project and nulls blank optional fields", () => {
     const r = parseProjectForm(form({ ...valid, summary: " ", starts_on: "", due_on: "" }));
-    expect(r.data).toEqual({ ...valid, summary: null, starts_on: null, due_on: null });
+    expect(r.data).toEqual({ ...valid, summary: null, starts_on: null, due_on: null, github_repo: null });
   });
 
   it("rejects a target date before the start date, reporting it on due_on", () => {

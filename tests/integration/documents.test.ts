@@ -79,3 +79,30 @@ describe("documents bucket", () => {
     expect((await as(A, "delete from storage.objects returning name")).rows).toHaveLength(1);
   });
 });
+
+describe("courses", () => {
+  const course = (user: string, grade: string | null = null) =>
+    as(user, "insert into public.courses (name, credits, semester, grade) values ('Basis Data', 3, 5, $1) returning id, user_id", [grade]);
+
+  it("belongs to the caller and checks the grade scale", async () => {
+    expect((await course(A, "AB")).rows[0]).toMatchObject({ user_id: A });
+    expect((await as(B, "select id from public.courses")).rows).toHaveLength(0);
+    await expect(course(A, "B+")).rejects.toThrow(/check/);
+  });
+
+  it("sessions need an owned course and an end after the start, and go with the course", async () => {
+    const { id } = (await course(A)).rows[0];
+    const add = (user: string, start: string, end: string) =>
+      as(user, "insert into public.course_sessions (course_id, weekday, starts_at, ends_at) values ($1, 1, $2, $3)", [id, start, end]);
+    await expect(add(B, "08:00", "09:40")).rejects.toThrow(/foreign key/);
+    await expect(add(A, "10:00", "09:00")).rejects.toThrow(/check/);
+    await add(A, "08:00", "09:40");
+    await as(A, "delete from public.courses where id = $1", [id]);
+    expect((await as(A, "select id from public.course_sessions")).rows).toHaveLength(0);
+  });
+
+  it("projects accept only owner/repo as github_repo", async () => {
+    await as(A, "insert into public.projects (name, github_repo) values ('p', 'Nuzzy32/NEXORA')");
+    await expect(as(A, "insert into public.projects (name, github_repo) values ('q', 'https://x')")).rejects.toThrow(/check/);
+  });
+});

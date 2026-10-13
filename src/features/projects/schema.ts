@@ -18,9 +18,19 @@ export type Project = {
   status: ProjectStatus;
   starts_on: string | null;
   due_on: string | null;
+  /** "owner/repo" on GitHub (PROJ-05); read with the server's optional token. */
+  github_repo: string | null;
   updated_at: string;
 };
-export const PROJECT_COLUMNS = "id,name,summary,status,starts_on,due_on,updated_at";
+export const PROJECT_COLUMNS = "id,name,summary,status,starts_on,due_on,github_repo,updated_at";
+
+/** Same rule as the column CHECK. A pasted github.com URL is reduced to "owner/repo" first. */
+export const GITHUB_REPO_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}$/;
+export function normalizeRepo(v: unknown): unknown {
+  if (typeof v !== "string") return v;
+  const s = v.trim().replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/\/+$/, "").replace(/\.git$/i, "");
+  return s === "" ? null : s;
+}
 export type TaskCounts = { open_count: number; done_count: number };
 export type ProjectWithCounts = Project & TaskCounts;
 
@@ -33,13 +43,17 @@ export const projectInputSchema = z
     status: z.enum(PROJECT_STATUSES, "Status tidak valid"),
     starts_on: z.preprocess(blankToNull, z.iso.date("Tanggal tidak valid").nullable()),
     due_on: z.preprocess(blankToNull, z.iso.date("Tanggal tidak valid").nullable()),
+    github_repo: z.preprocess(
+      normalizeRepo,
+      z.string().regex(GITHUB_REPO_PATTERN, "Tulis sebagai pemilik/nama-repo, misalnya vercel/next.js").nullable(),
+    ),
   })
   .refine((d) => !d.starts_on || !d.due_on || d.due_on >= d.starts_on, {
     path: ["due_on"],
     message: "Target selesai tidak boleh sebelum tanggal mulai",
   });
 
-export const PROJECT_FIELDS = ["name", "summary", "status", "starts_on", "due_on"] as const;
+export const PROJECT_FIELDS = ["name", "summary", "status", "starts_on", "due_on", "github_repo"] as const;
 
 export function parseProjectForm(formData: FormData) {
   return projectInputSchema.safeParse(Object.fromEntries(PROJECT_FIELDS.map((f) => [f, formData.get(f)])));
