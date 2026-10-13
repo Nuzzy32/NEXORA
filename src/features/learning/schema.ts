@@ -18,10 +18,11 @@ export type LearningDocument = {
   summary_input_tokens: number | null;
   summary_output_tokens: number | null;
   summarized_at: string | null;
+  course_id: string | null;
   created_at: string;
 };
 export const DOCUMENT_COLUMNS =
-  "id,title,file_name,size_bytes,status,summary,summary_draft,summary_model,summary_input_tokens,summary_output_tokens,summarized_at,created_at";
+  "id,title,file_name,size_bytes,status,summary,summary_draft,summary_model,summary_input_tokens,summary_output_tokens,summarized_at,course_id,created_at";
 
 /** `<user_id>/<document_id>.pdf`: the storage policies only allow the caller's own first folder. */
 export const storagePath = (userId: string, id: string) => `${userId}/${id}.pdf`;

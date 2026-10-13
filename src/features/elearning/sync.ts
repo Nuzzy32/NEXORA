@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { linkElearningTasks } from "@/features/courses/links";
 import { ElearningError, checkIcalUrl, fetchCalendar } from "./fetch";
 import { parseIcal } from "./ical";
 import { planSync, type ExistingTask } from "./plan";
@@ -68,6 +69,8 @@ async function importTasks(supabase: SupabaseClient, userId: string, now: Date) 
       updated += r.data.length;
     }
   }
+  // Tie new imports to the owner's courses (D-033). Best effort: a failure here never fails the sync.
+  await linkElearningTasks(supabase, userId).catch(() => 0);
   return { created: inserts.length, updated, unchanged, skipped };
 }
 

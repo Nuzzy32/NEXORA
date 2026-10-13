@@ -10,6 +10,7 @@ import { usageLabel } from "@/features/ai/providers/anthropic";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { cardStats } from "@/features/learning/flashcards";
+import { listCourses } from "@/features/courses/queries";
 import { listDocuments, listFlashcards } from "@/features/learning/queries";
 import { MAX_PDF_BYTES } from "@/features/learning/schema";
 import { MAX_SUMMARY_INPUT_TOKENS } from "@/features/learning/summarize";
@@ -40,7 +41,13 @@ export default function LearningPage() {
 
 async function LearningContent() {
   await io(); // "today" for the date labels
-  const [docs, settings, cards] = await Promise.all([listDocuments(), getOwnerSettings(), listFlashcards()]);
+  const [docs, settings, cards, courseData] = await Promise.all([
+    listDocuments(),
+    getOwnerSettings(),
+    listFlashcards(),
+    listCourses().catch(() => null),
+  ]);
+  const courseOptions = (courseData?.courses ?? []).map(({ id, name }) => ({ id, name }));
   const today = todayISO();
   const due = cardStats(cards, today).due;
   const blocked = !process.env.ANTHROPIC_API_KEY?.trim()
@@ -77,6 +84,7 @@ async function LearningContent() {
               key={`${d.id}:${d.summary_draft ? "draft" : "none"}`}
               index={i}
               summarizeBlocked={blocked}
+              courses={courseOptions}
               doc={{
                 ...d,
                 addedLabel: formatDate(localDate(d.created_at), today),

@@ -15,7 +15,8 @@ export type DataTable =
   | "documents"
   | "flashcards"
   | "courses"
-  | "course_sessions";
+  | "course_sessions"
+  | "study_sessions";
 
 /** `key` is a column that is never null, because PostgREST wants a filter on every delete. `eq` narrows the rows. */
 export type DeleteStep = { table: DataTable; key: "id" | "source"; eq?: readonly [column: string, value: string] };
@@ -31,8 +32,9 @@ export const DELETE_PLANS: Record<DeleteCategory, DeleteStep[]> = {
   // the PDF files in Storage are removed by the action before these rows (see `removesFiles`)
   // flashcards go first only so their count can be reported; deleting a document would cascade them anyway
   documents: [step("flashcards"), step("documents")],
-  courses: [step("course_sessions"), step("courses")],
+  courses: [step("study_sessions"), step("course_sessions"), step("courses")],
   all: [
+    step("study_sessions"),
     step("course_sessions"),
     step("courses"),
     step("flashcards"),
@@ -70,6 +72,7 @@ const LABEL: Record<DataTable, string> = {
   flashcards: "flashcard",
   courses: "mata kuliah",
   course_sessions: "jadwal kuliah",
+  study_sessions: "sesi belajar",
 };
 
 /** Whether a category deletes Learning documents, whose PDF files must leave Storage first. */

@@ -4,22 +4,24 @@ import { z } from "zod";
 import { failed, invalid, type ActionState } from "@/lib/action-state";
 import { requireUser } from "@/lib/auth/session";
 import { refreshApp } from "@/lib/revalidate";
+import { linkElearningTasks } from "./links";
 import { COURSE_FIELDS, parseCourseForm, parseSessionForm, SESSION_FIELDS } from "./schema";
 
 const idSchema = z.uuid();
 
 export async function createCourse(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase } = await requireUser();
+  const { user, supabase } = await requireUser();
   const parsed = parseCourseForm(formData);
   if (!parsed.success) return invalid(parsed.error, formData, COURSE_FIELDS);
   const { data, error } = await supabase.from("courses").insert(parsed.data).select("id").single<{ id: string }>();
   if (error) return failed("Mata kuliah gagal disimpan. Coba lagi.", formData, COURSE_FIELDS);
+  await linkElearningTasks(supabase, user.id).catch(() => 0);
   refreshApp();
   return { status: "ok", id: data.id };
 }
 
 export async function updateCourse(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase } = await requireUser();
+  const { user, supabase } = await requireUser();
   const courseId = idSchema.safeParse(id);
   if (!courseId.success) return failed("Mata kuliah tidak ditemukan.");
   const parsed = parseCourseForm(formData);
@@ -27,6 +29,8 @@ export async function updateCourse(id: string, _prev: ActionState, formData: For
   const { data, error } = await supabase.from("courses").update(parsed.data).eq("id", courseId.data).select("id");
   if (error) return failed("Mata kuliah gagal disimpan. Coba lagi.", formData, COURSE_FIELDS);
   if (data.length === 0) return failed("Mata kuliah tidak ditemukan.");
+  // A new name or code may now match imported tasks; existing links are kept.
+  await linkElearningTasks(supabase, user.id).catch(() => 0);
   refreshApp();
   return { status: "ok" };
 }
@@ -61,6 +65,30 @@ export async function deleteSession(id: string): Promise<ActionState> {
   if (!sid.success) return failed("Jadwal tidak ditemukan.");
   const { error } = await supabase.from("course_sessions").delete().eq("id", sid.data);
   if (error) return failed("Jadwal gagal dihapus. Coba lagi.");
+  refreshApp();
+  return { status: "ok" };
+}
+
+/** Links a Learning document to a course, or unlinks it (null). The composite FK rejects a foreign course. */
+export async function setDocumentCourse(documentId: string, courseId: string | null): Promise<ActionState> {
+  const { supabase } = await requireUser();
+  const doc = idSchema.safeParse(documentId);
+  const course = idSchema.nullable().safeParse(courseId);
+  if (!doc.success || !course.success) return failed("Pilihan tidak valid.");
+  const { data, error } = await supabase.from("documents").update({ course_id: course.data }).eq("id", doc.data).select("id");
+  if (error || data.length === 0) return failed("Mata kuliah dokumen gagal disimpan. Coba lagi.");
+  refreshApp();
+  return { status: "ok", message: course.data ? "Dokumen dihubungkan ke mata kuliah." : "Tautan mata kuliah dilepas." };
+}
+
+/** Records one finished focus session (or one stopped after at least a minute). */
+export async function logStudySession(courseId: string | null, minutes: number): Promise<ActionState> {
+  const { supabase } = await requireUser();
+  const course = idSchema.nullable().safeParse(courseId);
+  const mins = z.number().int().min(1).max(240).safeParse(minutes);
+  if (!course.success || !mins.success) return failed("Sesi tidak valid.");
+  const { error } = await supabase.from("study_sessions").insert({ course_id: course.data, minutes: mins.data });
+  if (error) return failed("Sesi belajar gagal dicatat. Coba lagi.");
   refreshApp();
   return { status: "ok" };
 }

@@ -56,6 +56,7 @@ const COUNTED: DataTable[] = [
   "flashcards",
   "courses",
   "course_sessions",
+  "study_sessions",
 ];
 
 /** Row counts shown in the delete dialogs. `null` when any count fails, so the page says so instead of showing zeros. */

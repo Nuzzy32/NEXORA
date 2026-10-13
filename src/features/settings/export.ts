@@ -15,6 +15,7 @@ export const EXPORT_TABLES = [
   "flashcards",
   "courses",
   "course_sessions",
+  "study_sessions",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -33,6 +34,7 @@ export const EXPORT_ORDER: Record<ExportTable, string> = {
   flashcards: "id",
   courses: "id",
   course_sessions: "id",
+  study_sessions: "id",
 };
 
 /** PostgREST caps one response (1000 rows by default), so tables are read page by page. */

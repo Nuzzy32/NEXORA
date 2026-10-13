@@ -232,13 +232,13 @@ export async function DataSection() {
           category: "courses",
           title: "Mata kuliah",
           dialogTitle: "Hapus semua mata kuliah?",
-          hint: "Semua mata kuliah beserta nilai dan jadwal mingguannya.",
+          hint: "Semua mata kuliah beserta nilai, jadwal mingguan, dan catatan sesi belajar. Tugas dan PDF tetap ada, tautannya dilepas.",
         },
         {
           category: "all",
           title: "Semua data NEXORA",
           dialogTitle: "Hapus semua data NEXORA?",
-          hint: "Proyek, task, catatan, memory, percakapan, brief, dokumen Learning beserta berkas PDF-nya, mata kuliah dan jadwalnya, dan status sinkron. Brief harian dan chat Claude dimatikan dan persetujuannya dicabut. Akun masuk (Supabase Auth) tetap ada.",
+          hint: "Proyek, task, catatan, memory, percakapan, brief, dokumen Learning beserta berkas PDF-nya, mata kuliah, jadwal, sesi belajar, dan status sinkron. Brief harian dan chat Claude dimatikan dan persetujuannya dicabut. Akun masuk (Supabase Auth) tetap ada.",
         },
   ];
   const items: DangerItem[] = counts ? base.map((i) => ({ ...i, summary: describeCounts(countsFor(i.category, counts)) })) : [];
@@ -248,7 +248,7 @@ export async function DataSection() {
       <Panel id="export" title="Ekspor data">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <p className={`min-w-0 flex-1 basis-72 ${note}`}>
-            Satu berkas JSON berisi proyek, task, catatan, memory, percakapan, brief, metadata, ringkasan, dan flashcard dokumen Learning, mata kuliah, nilai, jadwal,
+            Satu berkas JSON berisi proyek, task, catatan, memory, percakapan, brief, metadata, ringkasan, dan flashcard dokumen Learning, mata kuliah, nilai, jadwal, sesi belajar,
             pengaturan, dan status sinkron milikmu. Berkas PDF tidak ikut; unduh dari halaman Learning.
             Tidak berisi kunci API, URL e-learning, atau variabel environment apa pun.
           </p>

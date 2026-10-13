@@ -1,4 +1,10 @@
 import type { Metadata } from "next";
+import { io } from "next/cache";
+import Link from "next/link";
+import { FocusTimer } from "@/components/courses/focus-timer";
+import { TargetGpa } from "@/components/courses/target-gpa";
+import { formatMinutes, minutesByCourse } from "@/features/courses/links";
+import { addDays, localDate, todayISO } from "@/lib/date";
 import { Suspense } from "react";
 import { CourseForm } from "@/components/courses/course-form";
 import { PageHeader } from "@/components/layout/page-header";
@@ -7,8 +13,8 @@ import { FormDialog } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Icon } from "@/components/ui/icons";
 import { ListSkeleton } from "@/components/ui/skeleton";
-import { listCourses } from "@/features/courses/queries";
-import { formatGpa, gpaSummary, hhmm, WEEKDAY_LABEL, type Course, type CourseSession } from "@/features/courses/schema";
+import { listCourses, listStudySessions } from "@/features/courses/queries";
+import { formatGpa, gpaSummary, hhmm, isoWeekday, WEEKDAY_LABEL, type Course, type CourseSession } from "@/features/courses/schema";
 
 export const metadata: Metadata = { title: "Kuliah" };
 
@@ -23,8 +29,12 @@ export default function CoursesPage() {
 const addButton = buttonClass("primary", "gap-2");
 
 async function CoursesContent() {
-  const { courses, sessions } = await listCourses();
+  await io(); // "this week" depends on the clock
+  const [{ courses, sessions }, study] = await Promise.all([listCourses(), listStudySessions()]);
   const gpa = gpaSummary(courses);
+  const today = todayISO();
+  const weekly = minutesByCourse(study, addDays(today, 1 - isoWeekday(today)), localDate);
+  const weekTotal = [...weekly.values()].reduce((n, m) => n + m, 0);
   const current = gpa.semesters[0]?.semester ?? 1;
   const byCourse = new Map(courses.map((c) => [c.id, c]));
   const week = [1, 2, 3, 4, 5, 6, 7]
@@ -65,6 +75,23 @@ async function CoursesContent() {
               </div>
             ))}
           </dl>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <FocusTimer courses={courses.filter((c) => c.semester === current).map(({ id, name }) => ({ id, name }))} />
+              <p className="font-mono text-[11px] text-muted">
+                Belajar minggu ini: {formatMinutes(weekTotal)}
+                {weekTotal > 0 &&
+                  " · " +
+                    [...weekly]
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 3)
+                      .map(([id, m]) => `${id ? (courses.find((c) => c.id === id)?.name ?? "Mata kuliah") : "Tanpa mata kuliah"} ${formatMinutes(m)}`)
+                      .join(", ")}
+              </p>
+            </div>
+            <TargetGpa courses={courses} />
+          </div>
 
           <section aria-labelledby="week">
             <h2 id="week" className="mb-2 text-[15px] font-medium tracking-[-0.01em]">Jadwal semester {current}</h2>
@@ -119,31 +146,22 @@ function CourseList({ courses, sessions }: { courses: Course[]; sessions: Course
         const own = sessions.filter((s) => s.course_id === c.id);
         return (
           <li key={c.id}>
-            <FormDialog
-              title="Ubah mata kuliah"
-              triggerLabel={`Ubah mata kuliah: ${c.name}`}
-              triggerClassName="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-raised/50"
-              trigger={
-                <>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px]">{c.name}</span>
-                    <span className="block truncate font-mono text-[11px] text-muted">
-                      {[c.code, `${c.credits} SKS`, c.lecturer, own.map((s) => `${WEEKDAY_LABEL[s.weekday]} ${hhmm(s.starts_at)}`).join(", ")].filter(Boolean).join(" · ")}
-                    </span>
-                  </span>
-                  <span
-                    className={
-                      "grid h-7 min-w-9 shrink-0 place-items-center rounded-md border px-1.5 font-mono text-[12px] font-semibold " +
-                      (c.grade ? "border-line-strong text-fg" : "border-dashed border-line text-faint")
-                    }
-                  >
-                    {c.grade ?? "–"}
-                  </span>
-                </>
-              }
-            >
-              <CourseForm course={c} sessions={own} />
-            </FormDialog>
+            <Link href={`/courses/${c.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-raised/50">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px]">{c.name}</span>
+                <span className="block truncate font-mono text-[11px] text-muted">
+                  {[c.code, `${c.credits} SKS`, c.lecturer, own.map((s) => `${WEEKDAY_LABEL[s.weekday]} ${hhmm(s.starts_at)}`).join(", ")].filter(Boolean).join(" · ")}
+                </span>
+              </span>
+              <span
+                className={
+                  "grid h-7 min-w-9 shrink-0 place-items-center rounded-md border px-1.5 font-mono text-[12px] font-semibold " +
+                  (c.grade ? "border-line-strong text-fg" : "border-dashed border-line text-faint")
+                }
+              >
+                {c.grade ?? "–"}
+              </span>
+            </Link>
           </li>
         );
       })}

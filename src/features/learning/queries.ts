@@ -4,12 +4,12 @@ import { requireUser } from "@/lib/auth/session";
 import { FLASHCARD_COLUMNS, type Flashcard } from "./flashcards";
 import { DOCUMENT_COLUMNS, type LearningDocument } from "./schema";
 
-/** Newest first. RLS limits this to the caller's documents. */
-export async function listDocuments(): Promise<LearningDocument[]> {
+/** Newest first. RLS limits this to the caller's documents; `courseId` narrows to one course (D-033). */
+export async function listDocuments(courseId?: string): Promise<LearningDocument[]> {
   const { supabase } = await requireUser();
-  const { data, error } = await supabase
-    .from("documents")
-    .select(DOCUMENT_COLUMNS)
+  let q = supabase.from("documents").select(DOCUMENT_COLUMNS);
+  if (courseId) q = q.eq("course_id", courseId);
+  const { data, error } = await q
     .order("created_at", { ascending: false })
     .limit(200)
     .overrideTypes<LearningDocument[]>();

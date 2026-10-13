@@ -106,3 +106,24 @@ describe("courses", () => {
     await expect(as(A, "insert into public.projects (name, github_repo) values ('q', 'https://x')")).rejects.toThrow(/check/);
   });
 });
+
+describe("course links and study sessions", () => {
+  const course = async (user: string) =>
+    (await as(user, "insert into public.courses (name, credits, semester) values ('Basis Data', 3, 5) returning id")).rows[0].id as string;
+
+  it("tasks and documents link only to the caller's courses and are unlinked when the course goes", async () => {
+    const c = await course(A);
+    const t = (await as(A, "insert into public.tasks (title, course_id) values ('UTS', $1) returning id", [c])).rows[0].id;
+    await expect(as(B, "insert into public.tasks (title, course_id) values ('x', $1)", [c])).rejects.toThrow(/foreign key/);
+    await as(A, "delete from public.courses where id = $1", [c]);
+    expect((await as(A, "select course_id from public.tasks where id = $1", [t])).rows[0]).toEqual({ course_id: null });
+  });
+
+  it("study sessions are private, bounded and cannot be edited", async () => {
+    const c = await course(A);
+    await as(A, "insert into public.study_sessions (course_id, minutes) values ($1, 25)", [c]);
+    await expect(as(A, "insert into public.study_sessions (minutes) values (0)")).rejects.toThrow(/check/);
+    expect((await as(B, "select id from public.study_sessions")).rows).toHaveLength(0);
+    await expect(as(A, "update public.study_sessions set minutes = 240")).rejects.toThrow(/permission denied/);
+  });
+});

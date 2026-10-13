@@ -18,6 +18,8 @@ export async function listTasks(filters: {
   status: StatusFilter;
   priority: PriorityFilter;
   projectId?: string;
+  /** Tasks linked to one course (D-033). */
+  courseId?: string;
   q?: string;
   due?: string;
   /** Due date range, inclusive (the calendar's visible weeks). */
@@ -33,6 +35,7 @@ export async function listTasks(filters: {
   else if (filters.status !== "all") q = q.eq("status", filters.status);
   if (filters.priority !== "all") q = q.eq("priority", filters.priority);
   if (filters.projectId) q = q.eq("project_id", filters.projectId);
+  if (filters.courseId) q = q.eq("course_id", filters.courseId);
   if (filters.q) q = q.ilike("title", likePattern(filters.q));
   if (filters.due) q = q.eq("due_date", filters.due);
   if (filters.from) q = q.gte("due_date", filters.from);

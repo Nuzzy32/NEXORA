@@ -8,6 +8,7 @@ import { FormDialog } from "@/components/ui/dialog";
 import { ConfirmDelete } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { useToast } from "@/components/ui/toast";
+import { setDocumentCourse } from "@/features/courses/actions";
 import { deleteDocument, discardDraft, saveSummary, summarizeDocument } from "@/features/learning/actions";
 import type { CardStats } from "@/features/learning/flashcards";
 import { formatBytes, MAX_SUMMARY, type LearningDocument } from "@/features/learning/schema";
@@ -31,9 +32,12 @@ export function DocumentCard({
   doc,
   index,
   summarizeBlocked,
+  courses,
 }: {
   doc: DocumentView;
   index: number;
+  /** Courses the document can be linked to (D-033); the picker is hidden when there are none. */
+  courses: { id: string; name: string }[];
   /** Why summarizing is unavailable (no key, no opt-in); null when it is allowed. */
   summarizeBlocked: string | null;
 }) {
@@ -70,6 +74,22 @@ export function DocumentCard({
               <span aria-hidden>•</span>
               <span>Ditambahkan {doc.addedLabel}</span>
             </p>
+            {courses.length > 0 && (
+              <label className="mt-2 flex items-center gap-2 font-mono text-[11px] text-muted">
+                Mata kuliah
+                <select
+                  value={doc.course_id ?? ""}
+                  disabled={pending}
+                  onChange={(e) => run(() => setDocumentCourse(doc.id, e.target.value || null))}
+                  className="min-h-8 max-w-[14rem] rounded-md border border-line bg-surface px-2 font-sans text-[12px] text-fg pointer-coarse:min-h-11"
+                >
+                  <option value="">Tidak ada</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
           <span className="flex items-center gap-1.5">
             <span
