@@ -12,6 +12,7 @@ export const EXPORT_TABLES = [
   "owner_settings",
   "integration_syncs",
   "documents",
+  "flashcards",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -27,6 +28,7 @@ export const EXPORT_ORDER: Record<ExportTable, string> = {
   owner_settings: "user_id",
   integration_syncs: "source",
   documents: "id",
+  flashcards: "id",
 };
 
 /** PostgREST caps one response (1000 rows by default), so tables are read page by page. */

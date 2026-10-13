@@ -12,6 +12,7 @@ import { countsFor, describeCounts } from "@/features/settings/delete";
 import { getDataCounts, getOwnerSettings } from "@/features/settings/queries";
 import { formatDate, localDate, todayISO } from "@/lib/date";
 import { ConsentToggle } from "./consent-toggle";
+import { ThemePicker } from "./theme-picker";
 import { DangerList, type DangerItem } from "./danger-zone";
 import { ExportButton } from "./export-button";
 import { PrefsForm } from "./prefs-form";
@@ -185,7 +186,8 @@ export async function PrefsSection() {
           </p>
         </SettingRow>
         <SettingRow name="Tema">
-          <p className={note}>Gelap (tema terang belum tersedia).</p>
+          <ThemePicker />
+          <p className={note}>Disimpan di perangkat ini saja, jadi tiap browser bisa berbeda.</p>
         </SettingRow>
       </ul>
     </Panel>
@@ -224,7 +226,7 @@ export async function DataSection() {
           category: "documents",
           title: "Dokumen Learning",
           dialogTitle: "Hapus semua dokumen Learning?",
-          hint: "Semua PDF di penyimpanan beserta metadata dan ringkasannya.",
+          hint: "Semua PDF di penyimpanan beserta metadata, ringkasan, dan flashcard-nya.",
         },
         {
           category: "all",
@@ -240,7 +242,7 @@ export async function DataSection() {
       <Panel id="export" title="Ekspor data">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <p className={`min-w-0 flex-1 basis-72 ${note}`}>
-            Satu berkas JSON berisi proyek, task, catatan, memory, percakapan, brief, metadata dan ringkasan dokumen Learning,
+            Satu berkas JSON berisi proyek, task, catatan, memory, percakapan, brief, metadata, ringkasan, dan flashcard dokumen Learning,
             pengaturan, dan status sinkron milikmu. Berkas PDF tidak ikut; unduh dari halaman Learning.
             Tidak berisi kunci API, URL e-learning, atau variabel environment apa pun.
           </p>

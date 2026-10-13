@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useState, useTransition } from "react";
 import { Button, buttonClass, inputClass } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { ConfirmDelete } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { useToast } from "@/components/ui/toast";
 import { deleteDocument, discardDraft, saveSummary, summarizeDocument } from "@/features/learning/actions";
+import type { CardStats } from "@/features/learning/flashcards";
 import { formatBytes, MAX_SUMMARY, type LearningDocument } from "@/features/learning/schema";
 import type { ActionState } from "@/lib/action-state";
 
@@ -16,6 +18,7 @@ export type DocumentView = LearningDocument & {
   addedLabel: string;
   /** Tokens and estimated cost of the last generated summary, built on the server. */
   usage: string | null;
+  cards: CardStats;
 };
 
 const meta = "font-mono text-[11px] text-muted";
@@ -101,7 +104,7 @@ export function DocumentCard({
         ) : draftText !== null ? (
           <div className="mt-4 space-y-2">
             <label htmlFor={`summary-${doc.id}`} className={meta}>
-              {doc.summary_draft ? "Tinjau draf dari Claude, ubah bila perlu, lalu simpan" : "Ubah ringkasan"}
+              {doc.summary_draft ? "Tinjau draf dari Claude, ubah bila perlu, lalu simpan" : doc.summary ? "Ubah ringkasan" : "Tulis ringkasan"}
             </label>
             <textarea
               id={`summary-${doc.id}`}
@@ -134,17 +137,38 @@ export function DocumentCard({
               <Button variant="ghost" disabled={pending} onClick={() => { setText(doc.summary ?? ""); setEditing(true); }}>
                 <Icon name="edit" className="mr-1.5 size-4" /> Ubah
               </Button>
-              <SummarizeButton blocked={summarizeBlocked} pending={pending} again onRun={() => run(() => summarizeDocument(doc.id))} />
+              {summarizeBlocked === null && (
+                <SummarizeButton blocked={null} pending={pending} again onRun={() => run(() => summarizeDocument(doc.id))} />
+              )}
               {doc.usage && <span className={meta}>Terakhir dibuat: {doc.usage}</span>}
             </div>
           </div>
         ) : (
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <SummarizeButton blocked={summarizeBlocked} pending={pending} onRun={() => run(() => summarizeDocument(doc.id))} />
-            <p className="min-w-0 flex-1 basis-60 text-[13px] text-muted">
-              {summarizeBlocked ?? "Seluruh PDF dikirim sekali ke Claude Haiku 5.5 (Anthropic API, berbayar). Hasilnya jadi draf yang kamu tinjau dulu."}
-            </p>
+            {summarizeBlocked === null && (
+              <SummarizeButton blocked={null} pending={pending} onRun={() => run(() => summarizeDocument(doc.id))} />
+            )}
+            <Button variant={summarizeBlocked === null ? "ghost" : "primary"} disabled={pending} onClick={() => { setText(""); setEditing(true); }}>
+              Tulis ringkasan
+            </Button>
+            {summarizeBlocked === null && (
+              <p className="min-w-0 flex-1 basis-60 text-[13px] text-muted">
+                “Buat ringkasan” mengirim seluruh PDF sekali ke Claude Haiku 5.5 (Anthropic API, berbayar). Hasilnya jadi draf yang kamu tinjau dulu.
+              </p>
+            )}
           </div>
+        )}
+        {ready && (
+          <Link
+            href={`/learning/${doc.id}`}
+            className="mt-4 flex min-h-9 flex-wrap items-center gap-x-2 border-t border-line pt-3 font-mono text-[12px] text-muted hover:text-fg pointer-coarse:min-h-11"
+          >
+            <Icon name="book" className="size-4 text-accent" />
+            <span>Flashcard: {doc.cards.total} kartu</span>
+            {doc.cards.due > 0 && <span className="text-accent">· {doc.cards.due} jatuh tempo</span>}
+            {doc.cards.mastered > 0 && <span>· {doc.cards.mastered} dikuasai</span>}
+            <Icon name="arrowRight" className="ml-auto size-4" />
+          </Link>
         )}
         {pending && (
           <p role="status" className={`mt-3 ${meta}`}>

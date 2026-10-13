@@ -58,18 +58,8 @@ export async function BriefCard() {
   // A stored brief is only shown while the feature is on; after "Matikan" the opt-in offer comes back.
   if (state.brief && state.enabled) return <BriefView brief={state.brief} />;
 
-  if (!hasKey) {
-    return (
-      <Panel id="brief" title="Brief harian">
-        <p className="text-[13px] font-medium">Brief harian belum dikonfigurasi</p>
-        <p className={`mt-1 max-w-prose ${note}`}>
-          Isi <code className="font-mono text-[12px] text-fg">ANTHROPIC_API_KEY</code> di <code className="font-mono text-[12px] text-fg">.env.local</code>{" "}
-          atau environment hosting (hanya di server, jangan diawali NEXT_PUBLIC_), lalu jalankan ulang aplikasi. Kunci dari
-          console.anthropic.com; pemakaiannya berbayar per token.
-        </p>
-      </Panel>
-    );
-  }
+  // Without a key the brief cannot run; the owner turned paid AI off (D-029). Settings shows how to configure it.
+  if (!hasKey) return null;
 
   if (!state.enabled) {
     return (

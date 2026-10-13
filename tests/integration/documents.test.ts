@@ -38,6 +38,31 @@ describe("documents", () => {
   });
 });
 
+describe("flashcards", () => {
+  const ready = async (user: string) => (await insertDoc(user)).rows[0].id as string;
+  const addCard = (user: string, doc: string) =>
+    as(user, "insert into public.flashcards (document_id, front, back) values ($1, 'Q', 'A') returning id, box, user_id", [doc]);
+
+  it("starts in box 1 and belongs to the caller", async () => {
+    const doc = await ready(A);
+    expect((await addCard(A, doc)).rows[0]).toMatchObject({ box: 1, user_id: A });
+    expect((await as(B, "select id from public.flashcards")).rows).toHaveLength(0);
+  });
+
+  it("cannot attach to another user's document", async () => {
+    const doc = await ready(A);
+    await expect(addCard(B, doc)).rejects.toThrow(/foreign key/);
+  });
+
+  it("keeps the box between 1 and 5 and goes with its document", async () => {
+    const doc = await ready(A);
+    const { id } = (await addCard(A, doc)).rows[0];
+    await expect(as(A, "update public.flashcards set box = 6 where id = $1", [id])).rejects.toThrow(/check/);
+    await as(A, "delete from public.documents where id = $1", [doc]);
+    expect((await as(A, "select id from public.flashcards")).rows).toHaveLength(0);
+  });
+});
+
 describe("documents bucket", () => {
   it("is private with a 20 MB PDF-only limit", async () => {
     const { rows } = await db.query("select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'documents'");

@@ -18,11 +18,17 @@ export const metadata: Metadata = {
   description: "Personal intelligence workspace.",
 };
 
-export const viewport: Viewport = { themeColor: "#0b0d11", colorScheme: "dark" };
+export const viewport: Viewport = { themeColor: "#0b0d11", colorScheme: "dark light" };
+
+/** Applies the per-device theme choice before first paint, so a light page never flashes dark. */
+const THEME_SCRIPT = `try{var t=localStorage.getItem("nexora-theme");if(t==="light"||t==="system")document.documentElement.dataset.theme=t}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="id" className={`${ui.variable} ${data.variable} h-full antialiased`}>
+    <html lang="id" className={`${ui.variable} ${data.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

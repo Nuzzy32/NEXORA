@@ -17,6 +17,7 @@ export function ProjectTabs({
     { key: "overview", label: "Overview", href: `/projects/${projectId}?tab=overview` },
     { key: "tasks", label: "Tasks", count: openTasks, href: `/projects/${projectId}` },
     { key: "notes", label: "Keputusan & Catatan", count: notes, href: `/projects/${projectId}?tab=notes` },
+    { key: "timeline", label: "Timeline", href: `/projects/${projectId}?tab=timeline` },
   ];
   return (
     <nav

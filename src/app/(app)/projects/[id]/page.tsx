@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ProjectTimeline } from "@/components/projects/timeline";
+import type { ProjectWithCounts } from "@/features/projects/schema";
+import { buildTimeline } from "@/features/projects/timeline";
 import { Suspense } from "react";
 import { KindBadge } from "@/components/projects/note-kind-badge";
 import { NotesPanel } from "@/components/projects/notes-panel";
@@ -51,11 +54,22 @@ async function ProjectContent({ params, searchParams }: Pick<Props, "params" | "
         <OverviewTab projectId={id} openCount={project.open_count} doneCount={project.done_count} today={today} />
       ) : tab === "tasks" ? (
         <TasksTab projectId={id} today={today} />
+      ) : tab === "timeline" ? (
+        <TimelineTab project={project} today={today} />
       ) : (
         <NotesTab projectId={id} today={today} sp={sp} counts={counts} />
       )}
     </div>
   );
+}
+
+async function TimelineTab({ project, today }: { project: ProjectWithCounts; today: string }) {
+  const [tasks, notes] = await Promise.all([
+    listTasks({ status: "all", priority: "all", projectId: project.id }),
+    listNotes(project.id, { q: "", kind: "all" }),
+  ]);
+  const { entries, undated } = buildTimeline(project, tasks, notes, today);
+  return <ProjectTimeline entries={entries} undated={undated} today={today} />;
 }
 
 const NEXT_TASKS = 5;

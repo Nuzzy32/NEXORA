@@ -31,6 +31,51 @@
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* Light theme (D-031): same roles, every text colour >= 4.5:1 on bg, surface and raised. Chosen per device in Settings;
+   `data-theme` is set before first paint by the script in layout.tsx. No attribute = dark, as before. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --raised: #eceff4;
+  --overlay: #ffffff;
+  --line: #dfe3ea;
+  --line-strong: #c6cdd8;
+  --fg: #0f172a;
+  --muted: #475569;
+  --faint: #5b6677;
+  --accent: #0369a1;
+  --accent-ink: #ffffff;
+  --agent: #4f46e5;
+  --ok: #047857;
+  --ok-ink: #ffffff;
+  --warn: #a3500a;
+  --danger: #be123c;
+  --info: #4f46e5;
+}
+@media (prefers-color-scheme: light) {
+  :root[data-theme="system"] {
+  color-scheme: light;
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --raised: #eceff4;
+    --overlay: #ffffff;
+    --line: #dfe3ea;
+    --line-strong: #c6cdd8;
+    --fg: #0f172a;
+    --muted: #475569;
+    --faint: #5b6677;
+    --accent: #0369a1;
+    --accent-ink: #ffffff;
+    --agent: #4f46e5;
+    --ok: #047857;
+    --ok-ink: #ffffff;
+    --warn: #a3500a;
+    --danger: #be123c;
+    --info: #4f46e5;
+  }
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);

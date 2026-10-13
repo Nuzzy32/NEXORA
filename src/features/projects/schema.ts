@@ -131,7 +131,7 @@ export function parseNoteFilters(sp: Record<string, string | string[] | undefine
   } satisfies { q: string; kind: NoteKindFilter };
 }
 
-export const PROJECT_TABS = ["overview", "tasks", "notes"] as const;
+export const PROJECT_TABS = ["overview", "tasks", "notes", "timeline"] as const;
 export type ProjectTab = (typeof PROJECT_TABS)[number];
 export const parseProjectTab = (sp: Record<string, string | string[] | undefined>): ProjectTab =>
   PROJECT_TABS.find((t) => t === first(sp.tab)) ?? "tasks";

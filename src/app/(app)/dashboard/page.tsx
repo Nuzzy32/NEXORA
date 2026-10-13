@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { BriefCard, BriefSkeleton } from "@/components/brief/brief-card";
 import { Panel } from "@/components/dashboard/panel";
 import { PriorityQueue } from "@/components/dashboard/priority-queue";
-import { PinnedMemory, ProjectsRail, RecentConversations, RecentNotes } from "@/components/dashboard/rail";
+import { PinnedMemory, ProjectsRail, RecentActivity, RecentConversations, RecentNotes } from "@/components/dashboard/rail";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { WeekStrip } from "@/components/dashboard/week-strip";
 import { ElearningAutoSync } from "@/components/elearning/auto-sync";
@@ -163,6 +163,9 @@ async function Dashboard() {
               <WeekStrip days={week} />
             </Panel>
             <ProjectsRail projects={running} />
+            <Suspense fallback={null}>
+              <RecentActivity />
+            </Suspense>
             <Suspense fallback={null}>
               <RecentNotes />
             </Suspense>

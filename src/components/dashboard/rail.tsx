@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { ProgressRing } from "@/components/projects/progress-ring";
+import { Icon, type IconName } from "@/components/ui/icons";
+import type { ActivityKind } from "@/features/activity/feed";
+import { listActivity } from "@/features/activity/queries";
+import { clockLabel } from "@/features/ai/group";
 import { listConversations } from "@/features/ai/queries";
 import { listMemory } from "@/features/memory/queries";
 import { MEMORY_CATEGORY_LABEL } from "@/features/memory/schema";
@@ -133,6 +137,48 @@ export async function RecentConversations() {
             <Link href={`/ai?c=${c.id}`} className={row + " flex flex-col justify-center gap-0.5"}>
               <span className="block truncate text-[13px] font-medium">{c.title}</span>
               <span className="block font-mono text-[11px] text-muted">{formatDate(localDate(c.updated_at), today)}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+}
+
+const ACTIVITY_ICON: Record<ActivityKind, IconName> = {
+  task_done: "check",
+  task_new: "tasks",
+  project: "projects",
+  note: "note",
+  memory: "memory",
+  document: "book",
+};
+
+/** What changed lately across tasks, projects, notes, memory and Learning (DASH-06). Inside <Suspense>. */
+export async function RecentActivity() {
+  const items = await listActivity().catch(() => null);
+  if (items === null) {
+    return (
+      <Panel id="rail-activity" title="Aktivitas terbaru">
+        <p role="alert" className="text-[13px] text-danger">Aktivitas gagal dimuat. Muat ulang halaman untuk mencoba lagi.</p>
+      </Panel>
+    );
+  }
+  if (items.length === 0) return null;
+  const today = todayISO();
+  return (
+    <Panel id="rail-activity" title="Aktivitas terbaru">
+      <ul className="-mx-2">
+        {items.map((a) => (
+          <li key={a.key}>
+            <Link href={a.href} className={row + " flex items-center gap-3"}>
+              <Icon name={ACTIVITY_ICON[a.kind]} className={"size-4 shrink-0 " + (a.kind === "task_done" ? "text-ok" : "text-muted")} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-medium">{a.title}</span>
+                <span className="block truncate font-mono text-[11px] text-muted">
+                  {a.verb} · {localDate(a.at) === today ? clockLabel(a.at) : formatDate(localDate(a.at), today)}
+                </span>
+              </span>
             </Link>
           </li>
         ))}

@@ -26,15 +26,15 @@ export function StatCards({ stats }: { stats: Stat[] }) {
             style={{ "--i": i + 1 } as CSSProperties}
           >
             <span className="font-mono text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">{s.label}</span>
-            <span className="mt-3 flex items-baseline justify-between gap-2">
-              <span className="flex items-baseline gap-2">
+            <span className="mt-3 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1.5">
+              <span className="flex min-w-0 items-baseline gap-2">
                 <span className="text-[1.75rem] leading-none font-semibold tracking-[-0.03em] tabular-nums">{s.value}</span>
                 <span className="font-mono text-[11px] text-muted">{s.unit}</span>
               </span>
               {s.chip && (
                 <span
                   className={
-                    "rounded-sm px-1.5 py-0.5 font-mono text-[10px] font-semibold " +
+                    "shrink-0 rounded-sm px-1.5 py-0.5 font-mono text-[10px] font-semibold whitespace-nowrap " +
                     (s.chip.late ? "bg-danger/15 text-danger" : "bg-raised text-muted")
                   }
                 >
